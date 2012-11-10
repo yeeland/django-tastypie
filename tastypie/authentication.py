@@ -189,8 +189,9 @@ class ApiKeyAuthentication(Authentication):
             return self._unauthorized()
 
         try:
-            user = User.objects.get(username=username)
-        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            username_field = {getattr(auth_user_model, 'USERNAME_FIELD', 'username'): username}
+            user = auth_user_model.objects.get(**username_field)
+        except (auth_user_model.DoesNotExist, auth_user_model.MultipleObjectsReturned):
             return self._unauthorized()
 
         if not self.check_active(user):
@@ -360,8 +361,9 @@ class DigestAuthentication(Authentication):
         from tastypie.compat import User
 
         try:
-            user = User.objects.get(username=username)
-        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            username_field = {getattr(auth_user_model, 'USERNAME_FIELD', 'username'): username}
+            user = auth_user_model.objects.get(**username_field)
+        except (auth_user_model.DoesNotExist, auth_user_model.MultipleObjectsReturned):
             return False
 
         return user
