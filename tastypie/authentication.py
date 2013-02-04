@@ -277,7 +277,7 @@ class SessionAuthentication(Authentication):
 
         This implementation returns the user's username.
         """
-        return request.user.username
+        return getattr(request.user, request.user.USERNAME_FIELD)
 
 
 class DigestAuthentication(Authentication):
