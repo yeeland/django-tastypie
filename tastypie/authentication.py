@@ -10,6 +10,7 @@ from django.middleware.csrf import _sanitize_token, constant_time_compare
 from django.utils.http import same_origin
 from django.utils.translation import ugettext as _
 from tastypie.http import HttpUnauthorized
+from tastypie.compat import User, username_field
 
 try:
     from hashlib import sha1
@@ -189,9 +190,9 @@ class ApiKeyAuthentication(Authentication):
             return self._unauthorized()
 
         try:
-            username_field = {getattr(auth_user_model, 'USERNAME_FIELD', 'username'): username}
-            user = auth_user_model.objects.get(**username_field)
-        except (auth_user_model.DoesNotExist, auth_user_model.MultipleObjectsReturned):
+            lookup_kwargs = {username_field: username}
+            user = User.objects.get(**lookup_kwargs)
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
             return self._unauthorized()
 
         if not self.check_active(user):
@@ -278,7 +279,7 @@ class SessionAuthentication(Authentication):
 
         This implementation returns the user's username.
         """
-        return getattr(request.user, request.user.USERNAME_FIELD)
+        return getattr(request.user, username_field)
 
 
 class DigestAuthentication(Authentication):
@@ -358,12 +359,10 @@ class DigestAuthentication(Authentication):
         return True
 
     def get_user(self, username):
-        from tastypie.compat import User
-
         try:
-            username_field = {getattr(auth_user_model, 'USERNAME_FIELD', 'username'): username}
-            user = auth_user_model.objects.get(**username_field)
-        except (auth_user_model.DoesNotExist, auth_user_model.MultipleObjectsReturned):
+            lookup_kwargs = {username_field: username}
+            user = User.objects.get(**lookup_kwargs)
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
             return False
 
         return user
