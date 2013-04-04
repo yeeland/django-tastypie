@@ -8,6 +8,7 @@ arrIN=(${VERSION//./ })
 major=${arrIN[0]}
 minor=${arrIN[1]}
 
+#Don't run customuser tests if django's version is less than 1.5.
 if [ $major -lt '2' -a $minor -lt '5' ]; then
   ALL="core basic alphanumeric slashless namespaced related validation gis content_gfk authorization"
 else
