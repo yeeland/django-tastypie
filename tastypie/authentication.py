@@ -10,6 +10,7 @@ from django.middleware.csrf import _sanitize_token, constant_time_compare
 from django.utils.http import same_origin
 from django.utils.translation import ugettext as _
 from tastypie.http import HttpUnauthorized
+from tastypie.utils import mime
 from tastypie.compat import User, username_field
 
 try:
@@ -473,9 +474,11 @@ class MultiAuthentication(object):
     """
     An authentication backend that tries a number of backends in order.
     """
-    def __init__(self, *backends, **kwargs):
+    def __init__(self, serializer=None, default_format='application/json', *backends, **kwargs):
         super(MultiAuthentication, self).__init__(**kwargs)
         self.backends = backends
+        self.serializer = serializer
+        self.default_format = default_format
 
     def is_authenticated(self, request, **kwargs):
         """
@@ -496,7 +499,13 @@ class MultiAuthentication(object):
                     request._authentication_backend = backend
                     return check
 
-        return unauthorized
+        if self.serializer:
+            target_format = mime.determine_format(request, self.serializer, default_format=self.default_format)
+            serialized_response = self.serializer.serialize({}, format=target_format)
+            return HttpUnauthorized(content=serialized_response,
+                                    content_type=mime.build_content_type(target_format))
+        else:
+            return unauthorized
 
     def get_identifier(self, request):
         """
